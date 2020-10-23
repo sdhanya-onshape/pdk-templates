@@ -40,6 +40,8 @@ end
 
 RSpec.configure do |c|
   c.default_facts = default_facts
+  c.manifest_dir = File.join(fixture_path, 'manifests')
+  c.hiera_config = 'spec/fixtures/hiera/hiera.yaml'
   <%- if @configs['default_facter_version'] -%>
   c.default_facter_version = '<%= @configs['default_facter_version'] %>'
   <%- end -%>

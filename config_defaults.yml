@@ -21,14 +21,20 @@ common:
       - '/.vagrant/'
       - '/coverage/'
       - '/bin/'
+      - '/data/'
       - '/doc/'
+      - '/examples/'
       - '/Gemfile.local'
       - '/Gemfile.lock'
       - '/junit/'
       - '/log/'
       - '/pkg/'
+      - '/spec/defines/'
+      - '/spec/fixtures/functions/'
+      - '/spec/fixtures/hosts/'
       - '/spec/fixtures/manifests/'
       - '/spec/fixtures/modules/'
+      - '/tasks/'
       - '/tmp/'
       - '/vendor/'
       - '/convert_report.txt'
@@ -57,74 +63,6 @@ common:
     - '/spec/'
     - '/.vscode/'
     - '/.sync.yml'
-.travis.yml:
-  stages:
-    - static
-    - spec
-    - acceptance
-  ruby_versions:
-    - 2.5.7
-  bundler_args: --without system_tests
-  docker_sets:
-  docker_defaults:
-    # values will replace @@SET@@ with the docker_sets' value
-    rvm: 2.5.7
-    sudo: required
-    dist: trusty
-    services: docker
-    bundler_args: --with system_tests
-    env: PUPPET_INSTALL_TYPE=agent BEAKER_debug=true BEAKER_PUPPET_COLLECTION=@@COLLECTION@@ BEAKER_set=@@SET@@ BEAKER_TESTMODE=@@TESTMODE@@
-    script: bundle exec rake beaker
-    stage: acceptance
-  includes:
-    - env: CHECK="check:symlinks check:git_ignore check:dot_underscore check:test_file rubocop syntax lint metadata_lint"
-      stage: static
-    - env: PUPPET_GEM_VERSION="~> 5.0" CHECK=parallel_spec
-      rvm: 2.4.5
-      stage: spec
-    - env: PUPPET_GEM_VERSION="~> 6.0" CHECK=parallel_spec
-      rvm: 2.5.7
-      stage: spec
-  branches:
-    - main
-    - /^v\d/
-  use_litmus: false
-  use_litmus_complex: false
-  litmus:
-    provision_list: [travis_deb, travis_el]
-    puppet_collection: [puppet5, puppet6]
-    rvm: '2.5.7'
-    install_wget: no
-  notifications:
-    email: false
-  deploy_to_forge:
-    enabled: true
-    tag_regex: "^v\\d"
-.yardopts:
-  markup: markdown
-appveyor.yml:
-  appveyor_bundle_install: "bundle install --jobs 4 --retry 2 --without system_tests"
-  use_litmus: false
-  matrix:
-    - RUBY_VERSION: 24-x64
-      CHECK: "syntax lint metadata_lint check:symlinks check:git_ignore check:dot_underscore check:test_file rubocop"
-    - PUPPET_GEM_VERSION: ~> 5.0
-      RUBY_VERSION: 24
-      CHECK: parallel_spec
-    - PUPPET_GEM_VERSION: ~> 5.0
-      RUBY_VERSION: 24-x64
-      CHECK: parallel_spec
-    - PUPPET_GEM_VERSION: ~> 6.0
-      RUBY_VERSION: 25
-      CHECK: parallel_spec
-    - PUPPET_GEM_VERSION: ~> 6.0
-      RUBY_VERSION: 25-x64
-      CHECK: parallel_spec
-  test_script:
-    - bundle exec rake %CHECK%
-  branches:
-    - main
-    - release
 Rakefile:
   changelog_version_tag_pattern: 'v%s'
   default_disabled_lint_checks:
@@ -580,55 +518,20 @@ Gemfile:
       - gem: json
         version: '= 2.1.0'
         condition: "Gem::Requirement.create(['>= 2.5.0', '< 2.7.0']).satisfied_by?(Gem::Version.new(RUBY_VERSION.dup))"
-      - gem: 'rb-readline'
-        version: '= 0.5.5'
-        platforms:
-          - mswin
-          - mingw
-          - x64_mingw
       - gem: 'puppet-module-posix-default-r#{minor_version}'
         version: '~> 0.4'
         platforms: ruby
       - gem: 'puppet-module-posix-dev-r#{minor_version}'
         version: '~> 0.4'
         platforms: ruby
-      - gem: 'puppet-module-win-default-r#{minor_version}'
-        version: '~> 0.4'
-        platforms:
-          - mswin
-          - mingw
-          - x64_mingw
-      - gem: 'puppet-module-win-dev-r#{minor_version}'
-        version: '~> 0.4'
-        platforms:
-          - mswin
-          - mingw
-          - x64_mingw
-.gitlab-ci.yml:
-  defaults:
-    cache:
-      paths:
-        - 'vendor/bundle'
-    bundler_args: '--without system_tests --path vendor/bundle --jobs $(nproc)'
-    ruby_versions:
-      '2.5.7':
-        checks:
-          - 'syntax lint metadata_lint check:symlinks check:git_ignore check:dot_underscore check:test_file rubocop'
-          - parallel_spec
-        puppet_version: '~> 6'
-      '2.4.5':
-        checks:
-          - parallel_spec
-        puppet_version: '~> 5'
-    # beaker: true
-    default_before_script: true
 spec/default_facts.yml:
   ipaddress: "172.16.254.254"
   ipaddress6: "FE80:0000:0000:0000:AAAA:AAAA:AAAA"
   is_pe: false
   macaddress: "AA:AA:AA:AA:AA:AA"
 spec/spec_helper.rb:
-  coverage_report: false
-  minimum_code_coverage_percentage: 0
+  mock_with: ":rspec"
+  coverage_report: true
+  minimum_code_coverage_percentage: 95
   strict_level: ":warning"
   strict_variables: true
